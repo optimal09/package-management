@@ -24,6 +24,15 @@ sudo echo "jenkins ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/jenkins
 sudo sed -i "/^[^#]*PasswordAuthentication[[:space:]]no/c\PasswordAuthentication yes" /etc/ssh/sshd_config
 sudo service sshd restart
 sudo usermod -aG docker jenkins
+sudo systemctl restart docker.service
+
+3 # ACCESSING OUR JENKINS SERVER ONLINE
+#use the public ip with the port 8080 to access our jenkins server online
+#get password by 
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+#enter the password, install plugins and create a username/password
+
 
 3. #CONFIGURE KUBERNETES CLUSTER USING KOPS IN AWS
 #attacking required IAM role to Jenkins/kops server
+
