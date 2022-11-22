@@ -25,6 +25,8 @@ sudo sed -i "/^[^#]*PasswordAuthentication[[:space:]]no/c\PasswordAuthentication
 sudo service sshd restart
 sudo usermod -aG docker jenkins
 sudo systemctl restart docker.service
+sudo su - jenkins
+docker ps
 
 3 # ACCESSING OUR JENKINS SERVER ONLINE
 #use the public ip with the port 8080 to access our jenkins server online
@@ -34,5 +36,67 @@ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 
 
 3. #CONFIGURE KUBERNETES CLUSTER USING KOPS IN AWS
-#attacking required IAM role to Jenkins/kops server
+
+#INSTALLING AWSCLI
+sudo apt update -y
+sudo apt install awscli -y
+
+#INSTALLING KOPS SOFTWARE ON UBUNTU
+sudo apt install wget -y
+sudo wget https://github.com/kubernetes/kops/releases/download/v1.22.0/kops-linux-amd64
+sudo chmod +x kops-linux-amd64
+sudo mv kops-linux-amd64 /usr/local/bin/kops
+
+#INSTALL KUBECTL
+sudo curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl 
+sudo chmod +x ./kubectl
+sudo mv ./kubectl /usr/local/bin/kubectl
+
+#Create an IAM role from AWS Console or CLI with below Policies.
+#AmazonEC2FullAccess 
+#AmazonS3FullAccess
+#IAMFullAccess 
+#AmazonVPCFullAccess
+
+#create an S3 bucket Execute below commond in KOPS Server use unique bucket name if you get bucket name exists error.
+aws s3 mb s3://optics22
+aws s3 ls
+ex: s3://nubong.k8s.local
+Expose environment variable:
+# Add env variables in bashrc
+vi .bashrc
+# Give Unique Name And S3 Bucket which you created.
+export NAME=optics22.k8s.local
+export KOPS_STATE_STORE=s3://optics22
+source .bashrc
+
+# Create sshkeys before creating cluster
+ssh-keygen
+
+#Create kubernetes cluster definitions on S3 bucket
+kops create cluster --zones us-east-2c --networking weave --master-size t2.medium --master-count 1 --node-size t2.medium --node-count=2 ${NAME}
+kops create secret --name ${NAME} sshpublickey admin -i ~/.ssh/id_rsa.pub
+
+#Create kubernetes cluser
+kops update cluster ${NAME} --yes
+
+#Validate your cluster(KOPS will take some time to create cluster ,Execute below commond after 3 or 4 mins)
+kops validate cluster
+
+#connect to the master node
+ssh -i ~/.ssh/id_rsa ubuntu@ipAddress
+ssh -i ~/.ssh/id_rsa ubuntu@18.222.159.80
+
+#To Delete Cluster
+kops delete cluster --name=${NAME} --state=${KOPS_STATE_STORE} --yes
+
+
+
+
+
+
+
+
+
+
 
